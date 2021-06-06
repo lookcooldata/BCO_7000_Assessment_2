@@ -1,0 +1,155 @@
+---
+title: "Practical Assignment"
+author: "Kyle Beall"
+date: "6/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## *Kyle Beall* **s4650004**
+***
+# Assignment 2
+***
+![](C:\Users\kylet\Pictures\PXL_20210107_052235800.PORTRAIT.jpg)
+
+### Part 2: Data Wrangling and Visualisation
+
+```{r}
+library(tidyverse)
+library(skimr)
+library(scales)
+library(janitor)
+library(lubridate)
+library(datarium)
+theme_set(theme_light())
+```
+
+```{r}
+thanks <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-11-20/thanksgiving_meals.csv')
+```
+
+### Task 1
+```{r}
+thanks %>% head(10)
+```
+
+### Task 2
+```{r}
+
+thanks<-thanks%>% mutate(family_income=
+                   fct_reorder(family_income, parse_number(family_income)))
+
+levels(thanks$family_income)
+```
+
+### Task 3
+```{r}
+thanks %>% summary()
+thanks %>% skim()
+```
+
+### Task 4
+```{r}
+thanks$celebrate <- as_factor(thanks$celebrate)
+thanks$celebrate %>% fct_count(sort = TRUE)
+```
+
+### Task 5
+```{r}
+thanks$main_dish <- as_factor(thanks$main_dish)
+thanks$main_dish %>% fct_count(sort = TRUE)
+
+thanks$main_prep <- as_factor(thanks$main_prep)
+thanks$main_prep %>% fct_count(sort = TRUE)
+```
+
+### Task 6
+```{r}
+thanks %>% 
+  filter(!is.na(main_dish), !is.na(main_prep), main_dish!="I don't know", main_prep!="I don't know")%>%
+  ggplot(aes(main_dish, fill = main_prep))+
+  geom_bar(position = 'dodge')+
+   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = NULL,
+       y = "Number of Meals",
+       fill = NULL,
+       title = "Thanksgiving Feast")
+```
+
+### Task 7
+```{r}
+thanks$cranberry <- as_factor(thanks$cranberry)
+thanks$cranberry <- thanks$cranberry %>% fct_collapse('Yes' = c("Canned", "Homemade", "Other (please specify)"), "No"=c("None"))
+thanks$cranberry %>% fct_count(sort = TRUE)
+
+thanks$gravy <- as_factor(thanks$gravy)
+thanks$gravy %>% fct_count(sort = TRUE)
+
+```
+
+### Task 8
+```{r}
+thanks %>%
+  group_by(family_income) %>%
+  summarise(celebrate = sum(celebrate == "Yes"),
+            total = n()) %>%
+  ungroup()
+ 
+  
+```
+
+### Task 9 
+```{r}
+thanks %>%
+  group_by(family_income) %>%
+  summarise(celebrate = sum(celebrate == "Yes"),
+            total = n()) %>%
+  filter(!is.na(family_income), family_income!="Prefer not to answer")%>%
+  ggplot(aes(family_income, celebrate/total, group = 1))+
+  geom_line()+
+  scale_y_continuous(labels = scales::percent_format())+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = "Family Income",
+       y = "Did Celebrate",
+       title = "Income vs Celebration")
+  
+ 
+```
+
+### Task 10
+```{r}
+food_served<- thanks%>%
+  select(id, starts_with("side"),
+         starts_with("pie"),
+         starts_with("dessert"))%>%
+  select(-side15, -pie13, -dessert12)%>%
+  gather(type, value, -id)%>%
+  filter(!is.na(value),
+         !value %in% c("None", "Other (please specify)"))%>%
+  mutate(type=str_remove(type, "\\d+"))
+
+food_served%>%
+  count(type, value, sort = TRUE)
+```
+### Task 11
+```{r}
+food_served%>%
+  count(type, value, sort = TRUE)%>%
+  mutate(value = fct_reorder(value, n))%>%
+  ggplot(aes(value, n, fill=type))+
+  geom_col(show.legend = FALSE)+
+  coord_flip()+
+  facet_wrap(~type, scales = "free_y", ncol =1)+
+  labs(x = NULL,
+       y= "Count", 
+       title = "Food Served with Main")
+  
+```
+
+### Task 12
+
+
+
